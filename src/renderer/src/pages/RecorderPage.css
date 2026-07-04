@@ -1,0 +1,124 @@
+.recorder-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 32px 40px;
+  gap: 24px;
+}
+
+.recorder-page header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-background-mute);
+  padding-bottom: 16px;
+}
+
+.recorder-page h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.recorder-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.recorder-controls input {
+  min-width: 320px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--ev-c-gray-2);
+  background-color: var(--color-background-soft);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.recorder-controls button {
+  cursor: pointer;
+  border: 1px solid var(--ev-button-alt-border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ev-button-alt-text);
+  background-color: var(--ev-button-alt-bg);
+}
+
+.recorder-controls button:hover {
+  border-color: var(--ev-button-alt-hover-border);
+  color: var(--ev-button-alt-hover-text);
+  background-color: var(--ev-button-alt-hover-bg);
+}
+
+.recorder-page ol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: decimal;
+  padding-left: 20px;
+}
+
+.recorder-page li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: var(--color-background-soft);
+}
+
+.step-type {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+  min-width: 50px;
+}
+
+.step-value {
+  color: var(--ev-c-text-2);
+  font-size: 13px;
+}
+
+.mode-toggle.active {
+  color: #ffffff;
+  background-color: #b8452f;
+}
+
+.mode-toggle.active:hover {
+  background-color: #9c3b28;
+}
+
+.field-name-input {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--ev-c-gray-2);
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.delete-step {
+  margin-left: auto;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  font-size: 16px;
+  color: var(--ev-c-text-2);
+  background-color: transparent;
+}
+
+.delete-step:hover {
+  color: #ffffff;
+  background-color: #b8452f;
+}
+
+.recorder-hint {
+  color: var(--ev-c-text-2);
+  font-size: 13px;
+}

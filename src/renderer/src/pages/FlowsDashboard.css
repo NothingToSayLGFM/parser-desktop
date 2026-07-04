@@ -1,0 +1,101 @@
+.flows-dashboard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 32px 40px;
+  gap: 24px;
+}
+
+.flows-dashboard header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-background-mute);
+  padding-bottom: 16px;
+}
+
+.flows-dashboard h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.flows-dashboard button {
+  cursor: pointer;
+  border: 1px solid var(--ev-button-alt-border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ev-button-alt-text);
+  background-color: var(--ev-button-alt-bg);
+}
+
+.flows-dashboard button:hover {
+  border-color: var(--ev-button-alt-hover-border);
+  color: var(--ev-button-alt-hover-text);
+  background-color: var(--ev-button-alt-hover-bg);
+}
+
+.flows-dashboard button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flows-dashboard ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 0;
+}
+
+.flow-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: var(--color-background-soft);
+}
+
+.flow-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flow-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.flow-card-schedule {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ev-c-text-2);
+}
+
+.flow-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.enabled-toggle.on {
+  color: #2f9e5c;
+}
+
+.enabled-toggle.off {
+  color: var(--ev-c-text-2);
+}
+
+.schedule-input {
+  width: 200px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--ev-c-gray-2);
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
+  font-size: 13px;
+}

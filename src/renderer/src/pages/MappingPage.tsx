@@ -1,0 +1,121 @@
+import { useEffect, useState } from 'react'
+import type { FieldMapping, FlowStep } from '../../../shared/types'
+import { getExtractFieldKey } from '../../../shared/field-key'
+import './MappingPage.css'
+
+interface MappingPageProps {
+  flowId: string
+  onSaved?: () => void
+}
+
+function reconcileMapping(existing: FieldMapping[], fieldKeys: string[]): FieldMapping[] {
+  const kept = existing.filter((entry) => fieldKeys.includes(entry.fieldName))
+  const knownFieldNames = new Set(kept.map((entry) => entry.fieldName))
+  const added = fieldKeys
+    .filter((fieldKey) => !knownFieldNames.has(fieldKey))
+    .map((fieldKey, index) => ({
+      fieldName: fieldKey,
+      columnHeader: fieldKey,
+      order: kept.length + index
+    }))
+  return [...kept, ...added]
+}
+
+export default function MappingPage({ flowId, onSaved }: MappingPageProps): React.JSX.Element {
+  const [flowName, setFlowName] = useState('')
+  const [mapping, setMapping] = useState<FieldMapping[]>([])
+  const [outputPath, setOutputPath] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    window.api.flows.get(flowId).then((flow) => {
+      if (!flow) return
+      setFlowName(flow.name)
+      setOutputPath(flow.outputPath)
+
+      const steps = JSON.parse(flow.stepsJson) as FlowStep[]
+      const fieldKeys = [
+        ...new Set(steps.filter((step) => step.type === 'extract').map(getExtractFieldKey))
+      ].filter((key) => key.length > 0)
+      const existingMapping = JSON.parse(flow.mappingJson) as FieldMapping[]
+      setMapping(reconcileMapping(existingMapping, fieldKeys))
+    })
+  }, [flowId])
+
+  function handleColumnHeaderChange(fieldName: string, columnHeader: string): void {
+    setMapping((previous) =>
+      previous.map((entry) => (entry.fieldName === fieldName ? { ...entry, columnHeader } : entry))
+    )
+  }
+
+  function handleMove(index: number, direction: -1 | 1): void {
+    setMapping((previous) => {
+      const targetIndex = index + direction
+      if (targetIndex < 0 || targetIndex >= previous.length) return previous
+      const next = [...previous]
+      ;[next[index], next[targetIndex]] = [next[targetIndex], next[index]]
+      return next.map((entry, i) => ({ ...entry, order: i }))
+    })
+  }
+
+  async function handleChooseOutputPath(): Promise<void> {
+    const chosenPath = await window.api.dialog.chooseOutputPath()
+    if (chosenPath) {
+      setOutputPath(chosenPath)
+    }
+  }
+
+  async function handleSave(): Promise<void> {
+    setIsSaving(true)
+    try {
+      const orderedMapping = mapping.map((entry, index) => ({ ...entry, order: index }))
+      await window.api.flows.update(flowId, {
+        mappingJson: JSON.stringify(orderedMapping),
+        outputPath
+      })
+      onSaved?.()
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <div className="mapping-page">
+      <header>
+        <h1>Маппинг — {flowName}</h1>
+        <button onClick={handleSave} disabled={isSaving}>
+          Сохранить
+        </button>
+      </header>
+
+      <div className="output-path-row">
+        <span>Файл вывода:</span>
+        <code>{outputPath ?? 'не выбран — будет использован путь по умолчанию'}</code>
+        <button onClick={handleChooseOutputPath}>Выбрать файл…</button>
+      </div>
+
+      {mapping.length === 0 ? (
+        <p>В шагах флоу нет полей extract — сначала запишите их в Recorder</p>
+      ) : (
+        <ol>
+          {mapping.map((entry, index) => (
+            <li key={entry.fieldName}>
+              <span className="field-name">{entry.fieldName}</span>
+              <input
+                type="text"
+                value={entry.columnHeader}
+                onChange={(event) => handleColumnHeaderChange(entry.fieldName, event.target.value)}
+              />
+              <button onClick={() => handleMove(index, -1)} disabled={index === 0}>
+                ↑
+              </button>
+              <button onClick={() => handleMove(index, 1)} disabled={index === mapping.length - 1}>
+                ↓
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  )
+}

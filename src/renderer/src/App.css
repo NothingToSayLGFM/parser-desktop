@@ -1,0 +1,27 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.app-nav {
+  display: flex;
+  gap: 8px;
+  padding: 12px 40px 0;
+}
+
+.app-nav button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ev-c-text-2);
+  background-color: transparent;
+}
+
+.app-nav button.active {
+  color: var(--color-text);
+  background-color: var(--color-background-soft);
+}
