@@ -53,6 +53,15 @@ export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): Re
     setSteps((previous) => previous.map((step) => (step.id === id ? { ...step, fieldName } : step)))
   }
 
+  function handleToggleBatchInput(id: string): void {
+    setSteps((previous) =>
+      previous.map((step) => ({
+        ...step,
+        isBatchInput: step.id === id ? !step.isBatchInput : false
+      }))
+    )
+  }
+
   function handleDeleteStep(id: string): void {
     setSteps((previous) => previous.filter((step) => step.id !== id))
   }
@@ -125,6 +134,27 @@ export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): Re
                     value={step.fieldName ?? ''}
                     onChange={(event) => handleFieldNameChange(step.id, event.target.value)}
                   />
+                </>
+              ) : step.type === 'fill' ? (
+                <>
+                  <span className="step-value">{step.value}</span>
+                  <button
+                    className={
+                      step.isBatchInput ? 'batch-input-toggle active' : 'batch-input-toggle'
+                    }
+                    onClick={() => handleToggleBatchInput(step.id)}
+                  >
+                    {step.isBatchInput ? 'Параметр: ВКЛ' : 'Параметр'}
+                  </button>
+                  {step.isBatchInput ? (
+                    <input
+                      type="text"
+                      className="field-name-input"
+                      placeholder="имя поля (напр. article)"
+                      value={step.fieldName ?? ''}
+                      onChange={(event) => handleFieldNameChange(step.id, event.target.value)}
+                    />
+                  ) : null}
                 </>
               ) : step.value ? (
                 <span className="step-value">{step.value}</span>

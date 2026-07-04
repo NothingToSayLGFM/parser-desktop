@@ -7,6 +7,7 @@ import {
   updateFlow
 } from '../db/flows-repository'
 import { syncFlowSchedule, unscheduleFlow } from '../scheduler/scheduler'
+import { isFlowRunning } from '../state/running-flows'
 import type { CreateFlowInput, UpdateFlowInput } from '../../shared/types'
 
 export function registerFlowsIpc(): void {
@@ -21,6 +22,9 @@ export function registerFlowsIpc(): void {
   })
 
   ipcMain.handle('flows:update', (_event, id: string, input: UpdateFlowInput) => {
+    if (isFlowRunning(id)) {
+      throw new Error('Флоу сейчас выполняется — изменения запрещены')
+    }
     const flow = updateFlow(id, input)
     if (flow) {
       syncFlowSchedule(flow)
@@ -29,6 +33,9 @@ export function registerFlowsIpc(): void {
   })
 
   ipcMain.handle('flows:delete', (_event, id: string) => {
+    if (isFlowRunning(id)) {
+      throw new Error('Флоу сейчас выполняется — удаление запрещено')
+    }
     unscheduleFlow(id)
     deleteFlow(id)
   })

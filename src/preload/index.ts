@@ -1,11 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type {
+  BatchProgress,
+  BatchRunResult,
   CreateFlowInput,
   Flow,
+  FlowRunningChange,
   FlowRunResult,
   RecorderEvent,
   RecorderMode,
+  RunHistoryEntry,
   UpdateFlowInput
 } from '../shared/types'
 
@@ -18,7 +22,13 @@ const api = {
     update: (id: string, input: UpdateFlowInput): Promise<Flow | null> =>
       ipcRenderer.invoke('flows:update', id, input),
     delete: (id: string): Promise<void> => ipcRenderer.invoke('flows:delete', id),
-    run: (id: string): Promise<FlowRunResult> => ipcRenderer.invoke('flows:run', id)
+    run: (id: string): Promise<FlowRunResult> => ipcRenderer.invoke('flows:run', id),
+    listRunning: (): Promise<string[]> => ipcRenderer.invoke('flows:list-running'),
+    onRunningChanged: (callback: (change: FlowRunningChange) => void): (() => void) => {
+      const listener = (_event: unknown, change: FlowRunningChange): void => callback(change)
+      ipcRenderer.on('flows:running-changed', listener)
+      return () => ipcRenderer.removeListener('flows:running-changed', listener)
+    }
   },
   recorder: {
     start: (url: string): Promise<void> => ipcRenderer.invoke('recorder:start', url),
@@ -33,7 +43,28 @@ const api = {
     }
   },
   dialog: {
-    chooseOutputPath: (): Promise<string | null> => ipcRenderer.invoke('dialog:choose-output-path')
+    chooseOutputPath: (): Promise<string | null> => ipcRenderer.invoke('dialog:choose-output-path'),
+    chooseInputPath: (): Promise<string | null> => ipcRenderer.invoke('dialog:choose-input-path')
+  },
+  runHistory: {
+    listByFlow: (flowId: string): Promise<RunHistoryEntry[]> =>
+      ipcRenderer.invoke('run-history:list-by-flow', flowId)
+  },
+  batch: {
+    readHeaders: (filePath: string): Promise<string[]> =>
+      ipcRenderer.invoke('xlsx:read-headers', filePath),
+    run: (
+      flowId: string,
+      inputFilePath: string,
+      inputColumnHeader: string
+    ): Promise<BatchRunResult> =>
+      ipcRenderer.invoke('batch:run', flowId, inputFilePath, inputColumnHeader),
+    cancel: (): Promise<void> => ipcRenderer.invoke('batch:cancel'),
+    onProgress: (callback: (progress: BatchProgress) => void): (() => void) => {
+      const listener = (_event: unknown, progress: BatchProgress): void => callback(progress)
+      ipcRenderer.on('batch:progress', listener)
+      return () => ipcRenderer.removeListener('batch:progress', listener)
+    }
   }
 }
 

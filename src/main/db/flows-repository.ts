@@ -11,6 +11,7 @@ interface FlowRow {
   schedule_cron: string | null
   storage_state_path: string | null
   enabled: number
+  step_timeout_ms: number
   created_at: string
   updated_at: string
 }
@@ -25,6 +26,7 @@ function toFlow(row: FlowRow): Flow {
     scheduleCron: row.schedule_cron,
     storageStatePath: row.storage_state_path,
     enabled: row.enabled === 1,
+    stepTimeoutMs: row.step_timeout_ms,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
@@ -51,14 +53,15 @@ export function createFlow(input: CreateFlowInput): Flow {
     scheduleCron: null,
     storageStatePath: null,
     enabled: true,
+    stepTimeoutMs: 8000,
     createdAt: now,
     updatedAt: now
   }
 
   getDb()
     .prepare(
-      `INSERT INTO flows (id, name, steps_json, mapping_json, output_path, schedule_cron, storage_state_path, enabled, created_at, updated_at)
-       VALUES (@id, @name, @stepsJson, @mappingJson, @outputPath, @scheduleCron, @storageStatePath, @enabled, @createdAt, @updatedAt)`
+      `INSERT INTO flows (id, name, steps_json, mapping_json, output_path, schedule_cron, storage_state_path, enabled, step_timeout_ms, created_at, updated_at)
+       VALUES (@id, @name, @stepsJson, @mappingJson, @outputPath, @scheduleCron, @storageStatePath, @enabled, @stepTimeoutMs, @createdAt, @updatedAt)`
     )
     .run({ ...flow, enabled: flow.enabled ? 1 : 0 })
 
@@ -80,7 +83,8 @@ export function updateFlow(id: string, input: UpdateFlowInput): Flow | null {
   getDb()
     .prepare(
       `UPDATE flows SET name = @name, steps_json = @stepsJson, mapping_json = @mappingJson,
-         output_path = @outputPath, schedule_cron = @scheduleCron, enabled = @enabled, updated_at = @updatedAt
+         output_path = @outputPath, schedule_cron = @scheduleCron, enabled = @enabled,
+         step_timeout_ms = @stepTimeoutMs, updated_at = @updatedAt
        WHERE id = @id`
     )
     .run({ ...updated, enabled: updated.enabled ? 1 : 0 })

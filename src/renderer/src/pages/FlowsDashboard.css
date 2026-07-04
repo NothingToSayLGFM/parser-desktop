@@ -63,9 +63,23 @@
   justify-content: space-between;
 }
 
-.flow-name {
+.flow-name-input {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--color-text);
   font-weight: 600;
   font-size: 15px;
+}
+
+.flow-name-input:hover,
+.flow-name-input:focus {
+  border-color: var(--ev-c-gray-2);
+  background-color: var(--color-background-mute);
 }
 
 .flow-card-schedule {
@@ -79,6 +93,7 @@
 .flow-card-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 

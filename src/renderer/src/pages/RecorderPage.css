@@ -122,3 +122,19 @@
   color: var(--ev-c-text-2);
   font-size: 13px;
 }
+
+.batch-input-toggle {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ev-c-text-2);
+  background-color: var(--color-background-mute);
+}
+
+.batch-input-toggle.active {
+  color: #ffffff;
+  background-color: #2f6f9e;
+}

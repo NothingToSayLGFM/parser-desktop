@@ -79,3 +79,16 @@ export function findRunsByFlowId(flowId: string): RunHistoryEntry[] {
     .all(flowId) as RunHistoryRow[]
   return rows.map(toEntry)
 }
+
+export function interruptStaleRunningRuns(): void {
+  getDb()
+    .prepare(
+      `UPDATE run_history
+       SET finished_at = @finishedAt, status = 'error', error_message = @errorMessage
+       WHERE status = 'running'`
+    )
+    .run({
+      finishedAt: new Date().toISOString(),
+      errorMessage: 'Прервано перезапуском приложения'
+    })
+}

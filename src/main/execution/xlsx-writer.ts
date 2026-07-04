@@ -5,12 +5,10 @@ import type { FieldMapping } from '../../shared/types'
 
 const SHEET_NAME = 'Data'
 
-export async function appendRowToXlsx(
+async function openOrCreateWorksheet(
   filePath: string,
-  mapping: FieldMapping[],
-  row: Record<string, string>
-): Promise<void> {
-  const sortedMapping = [...mapping].sort((a, b) => a.order - b.order)
+  sortedMapping: FieldMapping[]
+): Promise<{ workbook: ExcelJS.Workbook; worksheet: ExcelJS.Worksheet }> {
   const workbook = new ExcelJS.Workbook()
   let worksheet: ExcelJS.Worksheet
 
@@ -23,6 +21,31 @@ export async function appendRowToXlsx(
     worksheet.addRow(sortedMapping.map((column) => column.columnHeader))
   }
 
+  return { workbook, worksheet }
+}
+
+export async function appendRowToXlsx(
+  filePath: string,
+  mapping: FieldMapping[],
+  row: Record<string, string>
+): Promise<void> {
+  const sortedMapping = [...mapping].sort((a, b) => a.order - b.order)
+  const { workbook, worksheet } = await openOrCreateWorksheet(filePath, sortedMapping)
+
   worksheet.addRow(sortedMapping.map((column) => row[column.fieldName] ?? ''))
+  await workbook.xlsx.writeFile(filePath)
+}
+
+export async function writeRowsToXlsx(
+  filePath: string,
+  mapping: FieldMapping[],
+  rows: Record<string, string>[]
+): Promise<void> {
+  const sortedMapping = [...mapping].sort((a, b) => a.order - b.order)
+  const { workbook, worksheet } = await openOrCreateWorksheet(filePath, sortedMapping)
+
+  for (const row of rows) {
+    worksheet.addRow(sortedMapping.map((column) => row[column.fieldName] ?? ''))
+  }
   await workbook.xlsx.writeFile(filePath)
 }

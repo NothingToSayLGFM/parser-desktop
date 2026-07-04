@@ -1,14 +1,10 @@
-import { app } from 'electron'
-import { join } from 'path'
 import { findFlowById } from '../db/flows-repository'
 import { createRun, finishRun } from '../db/run-history-repository'
+import { isFlowRunning, setFlowRunning } from '../state/running-flows'
 import { runFlow } from './execution-engine'
+import { resolveOutputPath } from './output-path'
 import { appendRowToXlsx } from './xlsx-writer'
-import type { FieldMapping, Flow, FlowRunResult } from '../../shared/types'
-
-function resolveOutputPath(flow: Flow): string {
-  return flow.outputPath ?? join(app.getPath('userData'), 'output', `${flow.id}.xlsx`)
-}
+import type { FieldMapping, FlowRunResult } from '../../shared/types'
 
 export async function runFlowJob(flowId: string): Promise<FlowRunResult> {
   const flow = findFlowById(flowId)
@@ -16,6 +12,11 @@ export async function runFlowJob(flowId: string): Promise<FlowRunResult> {
     return { status: 'error', errorMessage: 'Флоу не найден' }
   }
 
+  if (isFlowRunning(flowId)) {
+    return { status: 'error', errorMessage: 'Флоу уже выполняется' }
+  }
+
+  setFlowRunning(flowId, true)
   const run = createRun(flowId)
 
   try {
@@ -37,5 +38,7 @@ export async function runFlowJob(flowId: string): Promise<FlowRunResult> {
     const message = error instanceof Error ? error.message : 'Unknown error'
     finishRun(run.id, { status: 'error', errorMessage: message })
     return { status: 'error', errorMessage: message }
+  } finally {
+    setFlowRunning(flowId, false)
   }
 }

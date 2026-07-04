@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FieldMapping, FlowStep } from '../../../shared/types'
-import { getExtractFieldKey } from '../../../shared/field-key'
+import { getFieldKey } from '../../../shared/field-key'
 import './MappingPage.css'
 
 interface MappingPageProps {
@@ -25,6 +25,7 @@ export default function MappingPage({ flowId, onSaved }: MappingPageProps): Reac
   const [flowName, setFlowName] = useState('')
   const [mapping, setMapping] = useState<FieldMapping[]>([])
   const [outputPath, setOutputPath] = useState<string | null>(null)
+  const [stepTimeoutMs, setStepTimeoutMs] = useState(8000)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -32,11 +33,13 @@ export default function MappingPage({ flowId, onSaved }: MappingPageProps): Reac
       if (!flow) return
       setFlowName(flow.name)
       setOutputPath(flow.outputPath)
+      setStepTimeoutMs(flow.stepTimeoutMs)
 
       const steps = JSON.parse(flow.stepsJson) as FlowStep[]
-      const fieldKeys = [
-        ...new Set(steps.filter((step) => step.type === 'extract').map(getExtractFieldKey))
-      ].filter((key) => key.length > 0)
+      const mappableSteps = steps.filter(
+        (step) => step.type === 'extract' || (step.type === 'fill' && step.isBatchInput)
+      )
+      const fieldKeys = [...new Set(mappableSteps.map(getFieldKey))].filter((key) => key.length > 0)
       const existingMapping = JSON.parse(flow.mappingJson) as FieldMapping[]
       setMapping(reconcileMapping(existingMapping, fieldKeys))
     })
@@ -71,7 +74,8 @@ export default function MappingPage({ flowId, onSaved }: MappingPageProps): Reac
       const orderedMapping = mapping.map((entry, index) => ({ ...entry, order: index }))
       await window.api.flows.update(flowId, {
         mappingJson: JSON.stringify(orderedMapping),
-        outputPath
+        outputPath,
+        stepTimeoutMs
       })
       onSaved?.()
     } finally {
@@ -92,6 +96,18 @@ export default function MappingPage({ flowId, onSaved }: MappingPageProps): Reac
         <span>Файл вывода:</span>
         <code>{outputPath ?? 'не выбран — будет использован путь по умолчанию'}</code>
         <button onClick={handleChooseOutputPath}>Выбрать файл…</button>
+      </div>
+
+      <div className="output-path-row">
+        <span>Таймаут ожидания элемента (мс):</span>
+        <input
+          type="number"
+          className="timeout-input"
+          min={1000}
+          step={1000}
+          value={stepTimeoutMs}
+          onChange={(event) => setStepTimeoutMs(Number(event.target.value))}
+        />
       </div>
 
       {mapping.length === 0 ? (

@@ -3,9 +3,13 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initDb } from './db'
+import { interruptStaleRunningRuns } from './db/run-history-repository'
+import { registerBatchIpc } from './ipc/batch'
 import { registerDialogIpc } from './ipc/dialog'
 import { registerFlowsIpc } from './ipc/flows'
 import { registerRecorderIpc } from './ipc/recorder'
+import { registerRunHistoryIpc } from './ipc/run-history'
+import { registerRunningFlowsIpc } from './ipc/running-flows'
 import { registerRunsIpc } from './ipc/runs'
 import { initScheduler } from './scheduler/scheduler'
 import { createTray } from './tray/tray'
@@ -71,13 +75,17 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   initDb()
+  interruptStaleRunningRuns()
   registerFlowsIpc()
   registerRunsIpc()
+  registerRunHistoryIpc()
   initScheduler()
 
   const mainWindow = createWindow()
   registerRecorderIpc(mainWindow)
   registerDialogIpc(mainWindow)
+  registerBatchIpc(mainWindow)
+  registerRunningFlowsIpc(mainWindow)
   createTray(mainWindow, () => {
     isQuitting = true
     app.quit()

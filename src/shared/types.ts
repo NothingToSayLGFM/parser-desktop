@@ -9,6 +9,7 @@ export interface Flow {
   scheduleCron: string | null
   storageStatePath: string | null
   enabled: boolean
+  stepTimeoutMs: number
   createdAt: string
   updatedAt: string
 }
@@ -24,6 +25,7 @@ export interface UpdateFlowInput {
   outputPath?: string | null
   scheduleCron?: string | null
   enabled?: boolean
+  stepTimeoutMs?: number
 }
 
 export interface RunHistoryEntry {
@@ -45,6 +47,7 @@ export interface FlowStep {
   selector?: string
   value?: string
   fieldName?: string
+  isBatchInput?: boolean
 }
 
 export type RecorderEventType = FlowStepType
@@ -68,4 +71,22 @@ export interface FieldMapping {
   fieldName: string
   columnHeader: string
   order: number
+}
+
+export interface BatchProgress {
+  processed: number
+  total: number
+  succeeded: number
+  failed: number
+}
+
+export interface BatchRunResult {
+  succeeded: number
+  failed: number
+  outputFilePath: string | null
+}
+
+export interface FlowRunningChange {
+  flowId: string
+  isRunning: boolean
 }

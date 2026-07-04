@@ -8,4 +8,12 @@ export function registerDialogIpc(mainWindow: BrowserWindow): void {
     })
     return result.canceled ? null : (result.filePath ?? null)
   })
+
+  ipcMain.handle('dialog:choose-input-path', async (): Promise<string | null> => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [{ name: 'Excel', extensions: ['xlsx'] }]
+    })
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  })
 }

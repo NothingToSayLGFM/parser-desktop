@@ -81,6 +81,7 @@ export function recorderInjectedScript(): void {
       }
 
       emit({ type: 'click', selector: generateSelector(target) })
+      sessionStorage.setItem('__recorderLastClickAt', String(Date.now()))
     },
     true
   )
@@ -96,6 +97,17 @@ export function recorderInjectedScript(): void {
   )
 
   document.addEventListener('DOMContentLoaded', () => {
+    // A navigation that fires right after a recorded click is almost always
+    // that click's own side effect (form submit, link, SPA route change).
+    // Recording it as a separate `goto` would bake in a literal URL that
+    // overrides whatever the click produces on replay (e.g. with a different
+    // batch input value), so such navigations are skipped here.
+    const lastClickAt = Number(sessionStorage.getItem('__recorderLastClickAt') ?? 0)
+    sessionStorage.removeItem('__recorderLastClickAt')
+    if (lastClickAt && Date.now() - lastClickAt < 4000) {
+      return
+    }
+
     emit({ type: 'goto', value: window.location.href })
   })
 }

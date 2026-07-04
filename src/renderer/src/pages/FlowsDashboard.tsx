@@ -5,12 +5,16 @@ import './FlowsDashboard.css'
 interface FlowsDashboardProps {
   onOpenRecorder: (flowId: string) => void
   onOpenMapping: (flowId: string) => void
+  onOpenHistory: (flowId: string) => void
+  onOpenBatch: (flowId: string) => void
   onToast: (message: string) => void
 }
 
 export default function FlowsDashboard({
   onOpenRecorder,
   onOpenMapping,
+  onOpenHistory,
+  onOpenBatch,
   onToast
 }: FlowsDashboardProps): React.JSX.Element {
   const [flows, setFlows] = useState<Flow[]>([])
@@ -24,6 +28,22 @@ export default function FlowsDashboard({
 
   useEffect(() => {
     window.api.flows.list().then(setFlows)
+    window.api.flows.listRunning().then((ids) => setRunningFlowIds(new Set(ids)))
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.api.flows.onRunningChanged(({ flowId, isRunning }) => {
+      setRunningFlowIds((previous) => {
+        const next = new Set(previous)
+        if (isRunning) {
+          next.add(flowId)
+        } else {
+          next.delete(flowId)
+        }
+        return next
+      })
+    })
+    return unsubscribe
   }, [])
 
   async function handleCreate(): Promise<void> {
@@ -48,6 +68,16 @@ export default function FlowsDashboard({
     await loadFlows()
   }
 
+  async function handleNameChange(id: string, name: string): Promise<void> {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      await loadFlows()
+      return
+    }
+    await window.api.flows.update(id, { name: trimmed })
+    await loadFlows()
+  }
+
   async function handleDelete(id: string): Promise<void> {
     if (runningFlowIds.has(id)) {
       onToast('Флоу сейчас выполняется — дождитесь завершения')
@@ -58,22 +88,13 @@ export default function FlowsDashboard({
   }
 
   async function handleRun(id: string): Promise<void> {
-    setRunningFlowIds((previous) => new Set(previous).add(id))
-    try {
-      const result = await window.api.flows.run(id)
-      if (result.status === 'success') {
-        const fieldsCount = Object.keys(result.row ?? {}).length
-        const fileSuffix = result.outputFilePath ? ` → ${result.outputFilePath}` : ''
-        onToast(`Запуск успешен: извлечено полей — ${fieldsCount}${fileSuffix}`)
-      } else {
-        onToast(`Ошибка запуска: ${result.errorMessage}`)
-      }
-    } finally {
-      setRunningFlowIds((previous) => {
-        const next = new Set(previous)
-        next.delete(id)
-        return next
-      })
+    const result = await window.api.flows.run(id)
+    if (result.status === 'success') {
+      const fieldsCount = Object.keys(result.row ?? {}).length
+      const fileSuffix = result.outputFilePath ? ` → ${result.outputFilePath}` : ''
+      onToast(`Запуск успешен: извлечено полей — ${fieldsCount}${fileSuffix}`)
+    } else {
+      onToast(`Ошибка запуска: ${result.errorMessage}`)
     }
   }
 
@@ -93,7 +114,13 @@ export default function FlowsDashboard({
           {flows.map((flow) => (
             <li key={flow.id} className="flow-card">
               <div className="flow-card-header">
-                <span className="flow-name">{flow.name}</span>
+                <input
+                  type="text"
+                  className="flow-name-input"
+                  defaultValue={flow.name}
+                  onBlur={(event) => handleNameChange(flow.id, event.target.value)}
+                  disabled={runningFlowIds.has(flow.id)}
+                />
                 <button
                   className={flow.enabled ? 'enabled-toggle on' : 'enabled-toggle off'}
                   onClick={() => handleToggleEnabled(flow)}
@@ -130,6 +157,10 @@ export default function FlowsDashboard({
                 </button>
                 <button onClick={() => handleRun(flow.id)} disabled={runningFlowIds.has(flow.id)}>
                   {runningFlowIds.has(flow.id) ? 'Выполняется…' : 'Запустить'}
+                </button>
+                <button onClick={() => onOpenHistory(flow.id)}>История</button>
+                <button onClick={() => onOpenBatch(flow.id)} disabled={runningFlowIds.has(flow.id)}>
+                  Batch
                 </button>
                 <button
                   onClick={() => handleDelete(flow.id)}

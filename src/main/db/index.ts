@@ -47,5 +47,11 @@ export function initDb(): Database.Database {
     db.exec(migration)
   }
 
+  try {
+    db.exec('ALTER TABLE flows ADD COLUMN step_timeout_ms INTEGER NOT NULL DEFAULT 8000')
+  } catch {
+    // column already exists from a previous run
+  }
+
   return db
 }
