@@ -86,20 +86,20 @@ export default function MappingPage({ flowId, onSaved }: MappingPageProps): Reac
   return (
     <div className="mapping-page">
       <header>
-        <h1>Маппинг — {flowName}</h1>
+        <h1>Мапінг — {flowName}</h1>
         <button onClick={handleSave} disabled={isSaving}>
-          Сохранить
+          Зберегти
         </button>
       </header>
 
       <div className="output-path-row">
-        <span>Файл вывода:</span>
-        <code>{outputPath ?? 'не выбран — будет использован путь по умолчанию'}</code>
-        <button onClick={handleChooseOutputPath}>Выбрать файл…</button>
+        <span>Файл виводу:</span>
+        <code>{outputPath ?? 'не обрано — буде використано шлях за замовчуванням'}</code>
+        <button onClick={handleChooseOutputPath}>Обрати файл…</button>
       </div>
 
       <div className="output-path-row">
-        <span>Таймаут ожидания элемента (мс):</span>
+        <span>Таймаут очікування елемента (мс):</span>
         <input
           type="number"
           className="timeout-input"
@@ -111,7 +111,10 @@ export default function MappingPage({ flowId, onSaved }: MappingPageProps): Reac
       </div>
 
       {mapping.length === 0 ? (
-        <p>В шагах флоу нет полей extract — сначала запишите их в Recorder</p>
+        <p>
+          У кроках флоу немає позначених полів для отримання даних — спочатку запишіть їх у
+          Рекордері
+        </p>
       ) : (
         <ol>
           {mapping.map((entry, index) => (

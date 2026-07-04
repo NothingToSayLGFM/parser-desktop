@@ -23,7 +23,7 @@ export function registerFlowsIpc(): void {
 
   ipcMain.handle('flows:update', (_event, id: string, input: UpdateFlowInput) => {
     if (isFlowRunning(id)) {
-      throw new Error('Флоу сейчас выполняется — изменения запрещены')
+      throw new Error('Флоу зараз виконується — зміни заборонені')
     }
     const flow = updateFlow(id, input)
     if (flow) {
@@ -34,7 +34,7 @@ export function registerFlowsIpc(): void {
 
   ipcMain.handle('flows:delete', (_event, id: string) => {
     if (isFlowRunning(id)) {
-      throw new Error('Флоу сейчас выполняется — удаление запрещено')
+      throw new Error('Флоу зараз виконується — видалення заборонено')
     }
     unscheduleFlow(id)
     deleteFlow(id)

@@ -89,6 +89,6 @@ export function interruptStaleRunningRuns(): void {
     )
     .run({
       finishedAt: new Date().toISOString(),
-      errorMessage: 'Прервано перезапуском приложения'
+      errorMessage: 'Перервано перезапуском застосунку'
     })
 }

@@ -46,7 +46,7 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
       const runResult = await window.api.batch.run(flowId, inputFilePath, selectedColumn)
       setResult(runResult)
     } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Unknown error')
+      setError(caughtError instanceof Error ? caughtError.message : 'Невідома помилка')
     } finally {
       unsubscribe()
       setIsRunning(false)
@@ -60,20 +60,20 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
   return (
     <div className="batch-page">
       <header>
-        <h1>Batch — {flowName}</h1>
+        <h1>Пакетна обробка — {flowName}</h1>
       </header>
 
       <div className="batch-input-row">
-        <span>Входной файл:</span>
-        <code>{inputFilePath ?? 'не выбран'}</code>
+        <span>Вхідний файл:</span>
+        <code>{inputFilePath ?? 'не обрано'}</code>
         <button onClick={handleChooseFile} disabled={isRunning}>
-          Выбрать файл…
+          Обрати файл…
         </button>
       </div>
 
       {headers.length > 0 ? (
         <div className="batch-input-row">
-          <span>Колонка со значениями:</span>
+          <span>Колонка зі значеннями:</span>
           <select
             value={selectedColumn}
             onChange={(event) => setSelectedColumn(event.target.value)}
@@ -90,15 +90,15 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
 
       <div className="batch-controls">
         {isRunning ? (
-          <button onClick={handleCancel}>Отменить</button>
+          <button onClick={handleCancel}>Скасувати</button>
         ) : (
           <button onClick={handleRun} disabled={!inputFilePath || !selectedColumn}>
-            Запустить batch
+            Запустити обробку
           </button>
         )}
       </div>
 
-      {error ? <p className="batch-error">Ошибка: {error}</p> : null}
+      {error ? <p className="batch-error">Помилка: {error}</p> : null}
 
       {progress ? (
         <div className="batch-progress">
@@ -111,8 +111,8 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
             />
           </div>
           <p>
-            Обработано {progress.processed} из {progress.total} (успешно: {progress.succeeded},
-            ошибок: {progress.failed})
+            Оброблено {progress.processed} з {progress.total} (успішно: {progress.succeeded},
+            помилок: {progress.failed})
           </p>
         </div>
       ) : null}
@@ -120,7 +120,7 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
       {result ? (
         <div className="batch-result">
           <p>
-            Готово: успешно — {result.succeeded}, пропущено с ошибками — {result.failed}
+            Готово: успішно — {result.succeeded}, пропущено з помилками — {result.failed}
           </p>
           {result.outputFilePath ? <code>{result.outputFilePath}</code> : null}
         </div>

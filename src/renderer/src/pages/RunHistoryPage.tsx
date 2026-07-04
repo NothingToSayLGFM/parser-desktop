@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
-import type { RunHistoryEntry } from '../../../shared/types'
+import type { RunHistoryEntry, RunStatus } from '../../../shared/types'
 import './RunHistoryPage.css'
 
 interface RunHistoryPageProps {
   flowId: string
+}
+
+const STATUS_LABELS: Record<RunStatus, string> = {
+  running: 'ВИКОНУЄТЬСЯ',
+  success: 'УСПІШНО',
+  error: 'ПОМИЛКА'
 }
 
 function formatDateTime(value: string | null): string {
@@ -25,21 +31,21 @@ export default function RunHistoryPage({ flowId }: RunHistoryPageProps): React.J
   return (
     <div className="run-history-page">
       <header>
-        <h1>История запусков — {flowName}</h1>
+        <h1>Історія запусків — {flowName}</h1>
       </header>
 
       {runs.length === 0 ? (
-        <p>Флоу ещё ни разу не запускался</p>
+        <p>Флоу ще жодного разу не запускався</p>
       ) : (
         <table>
           <thead>
             <tr>
-              <th>Начало</th>
-              <th>Окончание</th>
+              <th>Початок</th>
+              <th>Завершення</th>
               <th>Статус</th>
-              <th>Строк</th>
+              <th>Рядків</th>
               <th>Файл</th>
-              <th>Ошибка</th>
+              <th>Помилка</th>
             </tr>
           </thead>
           <tbody>
@@ -48,7 +54,7 @@ export default function RunHistoryPage({ flowId }: RunHistoryPageProps): React.J
                 <td>{formatDateTime(run.startedAt)}</td>
                 <td>{formatDateTime(run.finishedAt)}</td>
                 <td>
-                  <span className={`status-badge ${run.status}`}>{run.status}</span>
+                  <span className={`status-badge ${run.status}`}>{STATUS_LABELS[run.status]}</span>
                 </td>
                 <td>{run.rowsCount ?? '—'}</td>
                 <td className="output-path-cell">{run.outputFilePath ?? '—'}</td>

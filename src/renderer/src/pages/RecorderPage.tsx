@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react'
-import type { FlowStep, RecorderMode } from '../../../shared/types'
+import type { FlowStep, FlowStepType, RecorderMode } from '../../../shared/types'
 import './RecorderPage.css'
 
 interface RecorderPageProps {
   flowId: string | null
   onSaved?: () => void
+}
+
+const STEP_TYPE_LABELS: Record<FlowStepType, string> = {
+  goto: 'ПЕРЕХІД',
+  click: 'КЛІК',
+  fill: 'ЗАПОВНЕННЯ',
+  extract: 'ОТРИМАННЯ'
 }
 
 export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): React.JSX.Element {
@@ -84,7 +91,7 @@ export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): Re
   return (
     <div className="recorder-page">
       <header>
-        <h1>{flowName ? `Recorder — ${flowName}` : 'Recorder'}</h1>
+        <h1>{flowName ? `Рекордер — ${flowName}` : 'Рекордер'}</h1>
         <div className="recorder-controls">
           <input
             type="text"
@@ -99,30 +106,30 @@ export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): Re
                 className={mode === 'extract' ? 'mode-toggle active' : 'mode-toggle'}
                 onClick={handleToggleMode}
               >
-                {mode === 'extract' ? 'Режим извлечения: ВКЛ' : 'Режим извлечения: выкл'}
+                {mode === 'extract' ? 'Режим витягування: УВІМК' : 'Режим витягування: вимк'}
               </button>
               <button onClick={handleStop}>Стоп</button>
             </>
           ) : (
-            <button onClick={handleStart}>Начать запись</button>
+            <button onClick={handleStart}>Почати запис</button>
           )}
           {flowId ? (
             <button onClick={handleSave} disabled={isSaving || steps.length === 0}>
-              Сохранить в флоу
+              Зберегти у флоу
             </button>
           ) : null}
         </div>
       </header>
 
-      {!flowId ? <p className="recorder-hint">Флоу не выбран — шаги не будут сохранены</p> : null}
+      {!flowId ? <p className="recorder-hint">Флоу не обрано — кроки не будуть збережені</p> : null}
 
       {steps.length === 0 ? (
-        <p>Шаги появятся здесь по мере действий в открытом браузере</p>
+        <p>Кроки з&apos;являться тут у міру дій у відкритому браузері</p>
       ) : (
         <ol>
           {steps.map((step) => (
             <li key={step.id}>
-              <span className="step-type">{step.type}</span>
+              <span className="step-type">{STEP_TYPE_LABELS[step.type]}</span>
               {step.selector ? <code>{step.selector}</code> : null}
               {step.type === 'extract' ? (
                 <>
@@ -130,7 +137,7 @@ export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): Re
                   <input
                     type="text"
                     className="field-name-input"
-                    placeholder="имя поля"
+                    placeholder="ім'я поля"
                     value={step.fieldName ?? ''}
                     onChange={(event) => handleFieldNameChange(step.id, event.target.value)}
                   />
@@ -144,13 +151,13 @@ export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): Re
                     }
                     onClick={() => handleToggleBatchInput(step.id)}
                   >
-                    {step.isBatchInput ? 'Параметр: ВКЛ' : 'Параметр'}
+                    {step.isBatchInput ? 'Параметр: УВІМК' : 'Параметр'}
                   </button>
                   {step.isBatchInput ? (
                     <input
                       type="text"
                       className="field-name-input"
-                      placeholder="имя поля (напр. article)"
+                      placeholder="ім'я поля (напр. article)"
                       value={step.fieldName ?? ''}
                       onChange={(event) => handleFieldNameChange(step.id, event.target.value)}
                     />

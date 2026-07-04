@@ -44,12 +44,12 @@ function App(): React.JSX.Element {
   }
 
   function handleFlowSaved(): void {
-    setToastMessage('Флоу сохранён')
+    setToastMessage('Флоу збережено')
     setView('dashboard')
   }
 
   function handleMappingSaved(): void {
-    setToastMessage('Маппинг сохранён')
+    setToastMessage('Мапінг збережено')
     setView('dashboard')
   }
 
@@ -63,7 +63,7 @@ function App(): React.JSX.Element {
           Флоу
         </button>
         <button className={view === 'recorder' ? 'active' : ''} onClick={handleSelectRecorderTab}>
-          Recorder
+          Рекордер
         </button>
       </nav>
       {view === 'dashboard' ? (

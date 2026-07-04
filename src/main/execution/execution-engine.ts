@@ -68,7 +68,7 @@ export async function executeSteps(
 export async function runFlow(flow: Flow): Promise<Record<string, string>> {
   const steps = JSON.parse(flow.stepsJson) as FlowStep[]
   if (steps.length === 0) {
-    throw new Error('Флоу не содержит шагов — запишите его через Recorder')
+    throw new Error('Флоу не містить кроків — запишіть його через Рекордер')
   }
 
   const browser = await chromium.launch({ headless: true })

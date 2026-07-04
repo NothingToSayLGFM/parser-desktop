@@ -7,14 +7,14 @@ export function createTray(mainWindow: BrowserWindow, onQuit: () => void): Tray 
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Показать окно',
+      label: 'Показати вікно',
       click: () => {
         mainWindow.show()
       }
     },
     { type: 'separator' },
     {
-      label: 'Выход',
+      label: 'Вихід',
       click: onQuit
     }
   ])

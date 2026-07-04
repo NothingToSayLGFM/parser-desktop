@@ -49,7 +49,7 @@ export default function FlowsDashboard({
   async function handleCreate(): Promise<void> {
     setIsCreating(true)
     try {
-      const name = `Новый флоу ${flows.length + 1}`
+      const name = `Новий флоу ${flows.length + 1}`
       await window.api.flows.create({ name })
       await loadFlows()
     } finally {
@@ -80,7 +80,7 @@ export default function FlowsDashboard({
 
   async function handleDelete(id: string): Promise<void> {
     if (runningFlowIds.has(id)) {
-      onToast('Флоу сейчас выполняется — дождитесь завершения')
+      onToast('Флоу зараз виконується — зачекайте на завершення')
       return
     }
     await window.api.flows.delete(id)
@@ -92,23 +92,23 @@ export default function FlowsDashboard({
     if (result.status === 'success') {
       const fieldsCount = Object.keys(result.row ?? {}).length
       const fileSuffix = result.outputFilePath ? ` → ${result.outputFilePath}` : ''
-      onToast(`Запуск успешен: извлечено полей — ${fieldsCount}${fileSuffix}`)
+      onToast(`Запуск успішний: отримано полів — ${fieldsCount}${fileSuffix}`)
     } else {
-      onToast(`Ошибка запуска: ${result.errorMessage}`)
+      onToast(`Помилка запуску: ${result.errorMessage}`)
     }
   }
 
   return (
     <div className="flows-dashboard">
       <header>
-        <h1>Флоу парсинга</h1>
+        <h1>Флоу парсингу</h1>
         <button onClick={handleCreate} disabled={isCreating}>
-          + Создать флоу
+          + Створити флоу
         </button>
       </header>
 
       {flows.length === 0 ? (
-        <p>Пока нет ни одного флоу</p>
+        <p>Поки що немає жодного флоу</p>
       ) : (
         <ul>
           {flows.map((flow) => (
@@ -126,12 +126,12 @@ export default function FlowsDashboard({
                   onClick={() => handleToggleEnabled(flow)}
                   disabled={runningFlowIds.has(flow.id)}
                 >
-                  {flow.enabled ? 'включён' : 'выключен'}
+                  {flow.enabled ? 'увімкнено' : 'вимкнено'}
                 </button>
               </div>
 
               <div className="flow-card-schedule">
-                <span>Расписание:</span>
+                <span>Розклад:</span>
                 <input
                   type="text"
                   className="schedule-input"
@@ -147,26 +147,26 @@ export default function FlowsDashboard({
                   onClick={() => onOpenRecorder(flow.id)}
                   disabled={runningFlowIds.has(flow.id)}
                 >
-                  Recorder
+                  Рекордер
                 </button>
                 <button
                   onClick={() => onOpenMapping(flow.id)}
                   disabled={runningFlowIds.has(flow.id)}
                 >
-                  Маппинг
+                  Мапінг
                 </button>
                 <button onClick={() => handleRun(flow.id)} disabled={runningFlowIds.has(flow.id)}>
-                  {runningFlowIds.has(flow.id) ? 'Выполняется…' : 'Запустить'}
+                  {runningFlowIds.has(flow.id) ? 'Виконується…' : 'Запустити'}
                 </button>
-                <button onClick={() => onOpenHistory(flow.id)}>История</button>
+                <button onClick={() => onOpenHistory(flow.id)}>Історія</button>
                 <button onClick={() => onOpenBatch(flow.id)} disabled={runningFlowIds.has(flow.id)}>
-                  Batch
+                  Пакетно
                 </button>
                 <button
                   onClick={() => handleDelete(flow.id)}
                   disabled={runningFlowIds.has(flow.id)}
                 >
-                  Удалить
+                  Видалити
                 </button>
               </div>
             </li>

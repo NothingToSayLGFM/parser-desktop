@@ -34,7 +34,7 @@ export async function readColumnValues(filePath: string, columnHeader: string): 
     }
   })
   if (columnIndex === -1) {
-    throw new Error(`Колонка "${columnHeader}" не найдена в файле`)
+    throw new Error(`Колонку "${columnHeader}" не знайдено у файлі`)
   }
 
   const values: string[] = []

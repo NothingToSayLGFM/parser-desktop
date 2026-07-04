@@ -10,8 +10,8 @@ async function runScheduledFlow(flow: Flow): Promise<void> {
   const result = await runFlowJob(flow.id)
   if (result.status === 'error') {
     new Notification({
-      title: `Ошибка автозапуска: ${flow.name}`,
-      body: result.errorMessage ?? 'Unknown error'
+      title: `Помилка автозапуску: ${flow.name}`,
+      body: result.errorMessage ?? 'Невідома помилка'
     }).show()
   }
 }

@@ -1,7 +1,8 @@
 @import './base.css';
 
 body {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #root {

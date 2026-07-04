@@ -9,11 +9,11 @@ import type { FieldMapping, FlowRunResult } from '../../shared/types'
 export async function runFlowJob(flowId: string): Promise<FlowRunResult> {
   const flow = findFlowById(flowId)
   if (!flow) {
-    return { status: 'error', errorMessage: 'Флоу не найден' }
+    return { status: 'error', errorMessage: 'Флоу не знайдено' }
   }
 
   if (isFlowRunning(flowId)) {
-    return { status: 'error', errorMessage: 'Флоу уже выполняется' }
+    return { status: 'error', errorMessage: 'Флоу вже виконується' }
   }
 
   setFlowRunning(flowId, true)

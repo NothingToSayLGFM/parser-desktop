@@ -24,19 +24,19 @@ export async function runBatch(
 
   const flow = findFlowById(flowId)
   if (!flow) {
-    throw new Error('Флоу не найден')
+    throw new Error('Флоу не знайдено')
   }
 
   const steps = JSON.parse(flow.stepsJson) as FlowStep[]
   const inputStep = steps.find((step) => step.type === 'fill' && step.isBatchInput)
   if (!inputStep) {
     throw new Error(
-      'В флоу не помечен шаг-параметр для batch (кнопка "Параметр" на шаге FILL в Recorder)'
+      'У флоу не позначено крок-параметр для пакетної обробки (кнопка "Параметр" на кроці FILL у Рекордері)'
     )
   }
 
   if (isFlowRunning(flowId)) {
-    throw new Error('Флоу уже выполняется')
+    throw new Error('Флоу вже виконується')
   }
 
   const mapping = JSON.parse(flow.mappingJson) as FieldMapping[]
@@ -85,7 +85,7 @@ export async function runBatch(
     finishRun(run.id, {
       status: 'success',
       rowsCount: succeeded,
-      errorMessage: failed > 0 ? `Пропущено с ошибками: ${failed}` : null,
+      errorMessage: failed > 0 ? `Пропущено з помилками: ${failed}` : null,
       outputFilePath: writtenOutputFilePath
     })
 
