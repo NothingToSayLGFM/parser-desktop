@@ -6,6 +6,7 @@ import './MappingPage.css'
 interface MappingPageProps {
   flowId: string
   onSaved?: () => void
+  onToast?: (message: string) => void
 }
 
 function reconcileMapping(existing: FieldMapping[], fieldKeys: string[]): FieldMapping[] {
@@ -21,7 +22,11 @@ function reconcileMapping(existing: FieldMapping[], fieldKeys: string[]): FieldM
   return [...kept, ...added]
 }
 
-export default function MappingPage({ flowId, onSaved }: MappingPageProps): React.JSX.Element {
+export default function MappingPage({
+  flowId,
+  onSaved,
+  onToast
+}: MappingPageProps): React.JSX.Element {
   const [flowName, setFlowName] = useState('')
   const [mapping, setMapping] = useState<FieldMapping[]>([])
   const [outputPath, setOutputPath] = useState<string | null>(null)
@@ -78,6 +83,9 @@ export default function MappingPage({ flowId, onSaved }: MappingPageProps): Reac
         stepTimeoutMs
       })
       onSaved?.()
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Невідома помилка'
+      onToast?.(`Не вдалося зберегти мапінг: ${message}`)
     } finally {
       setIsSaving(false)
     }

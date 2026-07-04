@@ -5,6 +5,7 @@ import './RecorderPage.css'
 interface RecorderPageProps {
   flowId: string | null
   onSaved?: () => void
+  onToast?: (message: string) => void
 }
 
 const STEP_TYPE_LABELS: Record<FlowStepType, string> = {
@@ -14,7 +15,11 @@ const STEP_TYPE_LABELS: Record<FlowStepType, string> = {
   extract: 'ОТРИМАННЯ'
 }
 
-export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): React.JSX.Element {
+export default function RecorderPage({
+  flowId,
+  onSaved,
+  onToast
+}: RecorderPageProps): React.JSX.Element {
   const [flowName, setFlowName] = useState<string | null>(null)
   const [url, setUrl] = useState('https://example.com')
   const [isRecording, setIsRecording] = useState(false)
@@ -83,6 +88,9 @@ export default function RecorderPage({ flowId, onSaved }: RecorderPageProps): Re
       }
       await window.api.flows.update(flowId, { stepsJson: JSON.stringify(steps) })
       onSaved?.()
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Невідома помилка'
+      onToast?.(`Не вдалося зберегти флоу: ${message}`)
     } finally {
       setIsSaving(false)
     }

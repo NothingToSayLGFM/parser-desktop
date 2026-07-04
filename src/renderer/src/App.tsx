@@ -80,10 +80,16 @@ function App(): React.JSX.Element {
           key={selectedFlowId ?? 'none'}
           flowId={selectedFlowId}
           onSaved={handleFlowSaved}
+          onToast={setToastMessage}
         />
       ) : null}
       {view === 'mapping' && selectedFlowId ? (
-        <MappingPage key={selectedFlowId} flowId={selectedFlowId} onSaved={handleMappingSaved} />
+        <MappingPage
+          key={selectedFlowId}
+          flowId={selectedFlowId}
+          onSaved={handleMappingSaved}
+          onToast={setToastMessage}
+        />
       ) : null}
       {view === 'history' && selectedFlowId ? (
         <RunHistoryPage key={selectedFlowId} flowId={selectedFlowId} />
