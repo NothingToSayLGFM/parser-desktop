@@ -46,8 +46,13 @@ export default function RecorderPage({
   async function handleStart(): Promise<void> {
     setSteps([])
     setModeState('navigate')
-    await window.api.recorder.start(url)
-    setIsRecording(true)
+    try {
+      await window.api.recorder.start(url)
+      setIsRecording(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      onToast?.(`Не вдалося запустити браузер: ${message}`)
+    }
   }
 
   async function handleStop(): Promise<void> {

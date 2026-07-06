@@ -2,7 +2,7 @@
   "name": "parser-desktop",
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
-  "main": "./out/main/index.js",
+  "main": "./electron-entry.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
   "scripts": {
