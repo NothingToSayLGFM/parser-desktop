@@ -1,6 +1,7 @@
 import { chromium, type Page } from 'playwright'
 import type { Flow, FlowStep } from '../../shared/types'
 import { getFieldKey } from '../../shared/field-key'
+import { resolveChromiumExecutablePath } from '../playwright-executable-path'
 
 export interface StepInputOverride {
   stepId: string
@@ -71,7 +72,10 @@ export async function runFlow(flow: Flow): Promise<Record<string, string>> {
     throw new Error('Флоу не містить кроків — запишіть його через Рекордер')
   }
 
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: resolveChromiumExecutablePath()
+  })
 
   try {
     const context = await browser.newContext()

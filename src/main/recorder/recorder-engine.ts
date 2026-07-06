@@ -1,5 +1,6 @@
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright'
 import { recorderInjectedScript } from './injected-script'
+import { resolveChromiumExecutablePath } from '../playwright-executable-path'
 import type { RecorderEvent, RecorderMode } from '../../shared/types'
 
 type RecorderEventListener = (event: RecorderEvent) => void
@@ -17,7 +18,10 @@ export async function startRecording(url: string, onEvent: RecorderEventListener
     throw new Error('Recording session already in progress')
   }
 
-  browser = await chromium.launch({ headless: false })
+  browser = await chromium.launch({
+    headless: false,
+    executablePath: resolveChromiumExecutablePath()
+  })
   context = await browser.newContext()
 
   await context.exposeFunction('__recorderEmit', (event: RecorderEvent) => {

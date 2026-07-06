@@ -1,5 +1,6 @@
 import { chromium } from 'playwright'
 import { executeSteps } from './execution-engine'
+import { resolveChromiumExecutablePath } from '../playwright-executable-path'
 import { readColumnValues } from './xlsx-reader'
 import { resolveOutputPath } from './output-path'
 import { writeRowsToXlsx } from './xlsx-writer'
@@ -47,7 +48,10 @@ export async function runBatch(
     const run = createRun(flowId)
     const outputFilePath = resolveOutputPath(flow)
 
-    const browser = await chromium.launch({ headless: true })
+    const browser = await chromium.launch({
+      headless: true,
+      executablePath: resolveChromiumExecutablePath()
+    })
     const rows: Record<string, string>[] = []
     let succeeded = 0
     let failed = 0
