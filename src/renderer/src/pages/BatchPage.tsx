@@ -39,9 +39,11 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
     setIsRunning(true)
     setResult(null)
     setError(null)
-    setProgress({ processed: 0, total: 0, succeeded: 0, failed: 0 })
+    setProgress({ flowId, processed: 0, total: 0, succeeded: 0, failed: 0 })
 
-    const unsubscribe = window.api.batch.onProgress(setProgress)
+    const unsubscribe = window.api.batch.onProgress((batchProgress) => {
+      if (batchProgress.flowId === flowId) setProgress(batchProgress)
+    })
     try {
       const runResult = await window.api.batch.run(flowId, inputFilePath, selectedColumn)
       setResult(runResult)
@@ -54,7 +56,7 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
   }
 
   async function handleCancel(): Promise<void> {
-    await window.api.batch.cancel()
+    await window.api.batch.cancel(flowId)
   }
 
   return (
@@ -122,7 +124,14 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
           <p>
             Готово: успішно — {result.succeeded}, пропущено з помилками — {result.failed}
           </p>
-          {result.outputFilePath ? <code>{result.outputFilePath}</code> : null}
+          {result.outputFilePath ? (
+            <div className="batch-input-row">
+              <code>{result.outputFilePath}</code>
+              <button onClick={() => window.api.dialog.showItemInFolder(result.outputFilePath!)}>
+                Показати файл
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

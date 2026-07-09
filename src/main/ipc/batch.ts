@@ -19,7 +19,7 @@ export function registerBatchIpc(mainWindow: BrowserWindow): void {
       })
   )
 
-  ipcMain.handle('batch:cancel', () => {
-    requestBatchCancel()
+  ipcMain.handle('batch:cancel', (_event, flowId: string) => {
+    requestBatchCancel(flowId)
   })
 }

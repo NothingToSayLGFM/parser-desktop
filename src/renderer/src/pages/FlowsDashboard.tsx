@@ -159,9 +159,7 @@ export default function FlowsDashboard({
                   {runningFlowIds.has(flow.id) ? 'Виконується…' : 'Запустити'}
                 </button>
                 <button onClick={() => onOpenHistory(flow.id)}>Історія</button>
-                <button onClick={() => onOpenBatch(flow.id)} disabled={runningFlowIds.has(flow.id)}>
-                  Пакетно
-                </button>
+                <button onClick={() => onOpenBatch(flow.id)}>Пакетно</button>
                 <button
                   onClick={() => handleDelete(flow.id)}
                   disabled={runningFlowIds.has(flow.id)}

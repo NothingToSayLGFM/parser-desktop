@@ -13,9 +13,10 @@ function App(): React.JSX.Element {
   const [view, setView] = useState<View>('dashboard')
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
-  // Kept mounted (just hidden) once opened, so a running batch and its
-  // progress survive navigating to other tabs and back.
-  const [batchFlowId, setBatchFlowId] = useState<string | null>(null)
+  // Every flow whose Batch tab was opened stays mounted (just hidden) for the
+  // rest of the session, so a running batch and its progress survive
+  // navigating away to other flows/tabs and back.
+  const [openedBatchFlowIds, setOpenedBatchFlowIds] = useState<string[]>([])
 
   function handleOpenRecorder(flowId: string): void {
     setSelectedFlowId(flowId)
@@ -34,13 +35,10 @@ function App(): React.JSX.Element {
 
   function handleOpenBatch(flowId: string): void {
     setSelectedFlowId(flowId)
-    setBatchFlowId(flowId)
+    setOpenedBatchFlowIds((previous) =>
+      previous.includes(flowId) ? previous : [...previous, flowId]
+    )
     setView('batch')
-  }
-
-  function handleSelectRecorderTab(): void {
-    setSelectedFlowId(null)
-    setView('recorder')
   }
 
   function handleFlowSaved(): void {
@@ -62,9 +60,6 @@ function App(): React.JSX.Element {
         >
           Флоу
         </button>
-        <button className={view === 'recorder' ? 'active' : ''} onClick={handleSelectRecorderTab}>
-          Рекордер
-        </button>
       </nav>
       {view === 'dashboard' ? (
         <FlowsDashboard
@@ -75,9 +70,9 @@ function App(): React.JSX.Element {
           onToast={setToastMessage}
         />
       ) : null}
-      {view === 'recorder' ? (
+      {view === 'recorder' && selectedFlowId ? (
         <RecorderPage
-          key={selectedFlowId ?? 'none'}
+          key={selectedFlowId}
           flowId={selectedFlowId}
           onSaved={handleFlowSaved}
           onToast={setToastMessage}
@@ -94,11 +89,16 @@ function App(): React.JSX.Element {
       {view === 'history' && selectedFlowId ? (
         <RunHistoryPage key={selectedFlowId} flowId={selectedFlowId} />
       ) : null}
-      {batchFlowId ? (
-        <div style={{ display: view === 'batch' ? 'contents' : 'none' }}>
-          <BatchPage key={batchFlowId} flowId={batchFlowId} />
+      {openedBatchFlowIds.map((flowId) => (
+        <div
+          key={flowId}
+          style={{
+            display: view === 'batch' && selectedFlowId === flowId ? 'contents' : 'none'
+          }}
+        >
+          <BatchPage flowId={flowId} />
         </div>
-      ) : null}
+      ))}
       {toastMessage ? (
         <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
       ) : null}

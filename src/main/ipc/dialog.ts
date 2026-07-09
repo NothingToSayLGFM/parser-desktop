@@ -1,4 +1,4 @@
-import { dialog, ipcMain, type BrowserWindow } from 'electron'
+import { dialog, ipcMain, shell, type BrowserWindow } from 'electron'
 
 export function registerDialogIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle('dialog:choose-output-path', async (): Promise<string | null> => {
@@ -15,5 +15,9 @@ export function registerDialogIpc(mainWindow: BrowserWindow): void {
       filters: [{ name: 'Excel', extensions: ['xlsx'] }]
     })
     return result.canceled ? null : (result.filePaths[0] ?? null)
+  })
+
+  ipcMain.handle('dialog:show-item-in-folder', (_event, filePath: string): void => {
+    shell.showItemInFolder(filePath)
   })
 }

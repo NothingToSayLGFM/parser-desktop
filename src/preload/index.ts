@@ -44,7 +44,9 @@ const api = {
   },
   dialog: {
     chooseOutputPath: (): Promise<string | null> => ipcRenderer.invoke('dialog:choose-output-path'),
-    chooseInputPath: (): Promise<string | null> => ipcRenderer.invoke('dialog:choose-input-path')
+    chooseInputPath: (): Promise<string | null> => ipcRenderer.invoke('dialog:choose-input-path'),
+    showItemInFolder: (filePath: string): Promise<void> =>
+      ipcRenderer.invoke('dialog:show-item-in-folder', filePath)
   },
   runHistory: {
     listByFlow: (flowId: string): Promise<RunHistoryEntry[]> =>
@@ -59,7 +61,7 @@ const api = {
       inputColumnHeader: string
     ): Promise<BatchRunResult> =>
       ipcRenderer.invoke('batch:run', flowId, inputFilePath, inputColumnHeader),
-    cancel: (): Promise<void> => ipcRenderer.invoke('batch:cancel'),
+    cancel: (flowId: string): Promise<void> => ipcRenderer.invoke('batch:cancel', flowId),
     onProgress: (callback: (progress: BatchProgress) => void): (() => void) => {
       const listener = (_event: unknown, progress: BatchProgress): void => callback(progress)
       ipcRenderer.on('batch:progress', listener)

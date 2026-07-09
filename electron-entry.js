@@ -6,4 +6,5 @@
 // copy bundled alongside the app in node_modules/playwright-core/.local-browsers.
 process.env.PLAYWRIGHT_BROWSERS_PATH = '0'
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require('./out/main/index.js')

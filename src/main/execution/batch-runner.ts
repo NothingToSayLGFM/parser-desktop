@@ -9,10 +9,10 @@ import { createRun, finishRun } from '../db/run-history-repository'
 import { isFlowRunning, setFlowRunning } from '../state/running-flows'
 import type { BatchProgress, BatchRunResult, FieldMapping, FlowStep } from '../../shared/types'
 
-let cancelRequested = false
+const cancelRequestedFlowIds = new Set<string>()
 
-export function requestBatchCancel(): void {
-  cancelRequested = true
+export function requestBatchCancel(flowId: string): void {
+  cancelRequestedFlowIds.add(flowId)
 }
 
 export async function runBatch(
@@ -21,7 +21,7 @@ export async function runBatch(
   inputColumnHeader: string,
   onProgress: (progress: BatchProgress) => void
 ): Promise<BatchRunResult> {
-  cancelRequested = false
+  cancelRequestedFlowIds.delete(flowId)
 
   const flow = findFlowById(flowId)
   if (!flow) {
@@ -61,7 +61,7 @@ export async function runBatch(
       const page = await context.newPage()
 
       for (let i = 0; i < values.length; i++) {
-        if (cancelRequested) break
+        if (cancelRequestedFlowIds.has(flowId)) break
 
         try {
           const row = await executeSteps(page, steps, flow.stepTimeoutMs, {
@@ -74,7 +74,7 @@ export async function runBatch(
           failed++
         }
 
-        onProgress({ processed: i + 1, total: values.length, succeeded, failed })
+        onProgress({ flowId, processed: i + 1, total: values.length, succeeded, failed })
       }
     } finally {
       await browser.close()
@@ -95,6 +95,7 @@ export async function runBatch(
 
     return { succeeded, failed, outputFilePath: writtenOutputFilePath }
   } finally {
+    cancelRequestedFlowIds.delete(flowId)
     setFlowRunning(flowId, false)
   }
 }

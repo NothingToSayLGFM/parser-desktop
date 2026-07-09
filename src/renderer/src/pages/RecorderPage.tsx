@@ -3,7 +3,7 @@ import type { FlowStep, FlowStepType, RecorderMode } from '../../../shared/types
 import './RecorderPage.css'
 
 interface RecorderPageProps {
-  flowId: string | null
+  flowId: string
   onSaved?: () => void
   onToast?: (message: string) => void
 }
@@ -28,7 +28,6 @@ export default function RecorderPage({
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    if (!flowId) return
     window.api.flows.get(flowId).then((flow) => {
       if (!flow) return
       setFlowName(flow.name)
@@ -84,7 +83,6 @@ export default function RecorderPage({
   }
 
   async function handleSave(): Promise<void> {
-    if (!flowId) return
     setIsSaving(true)
     try {
       if (isRecording) {
@@ -126,15 +124,11 @@ export default function RecorderPage({
           ) : (
             <button onClick={handleStart}>Почати запис</button>
           )}
-          {flowId ? (
-            <button onClick={handleSave} disabled={isSaving || steps.length === 0}>
-              Зберегти у флоу
-            </button>
-          ) : null}
+          <button onClick={handleSave} disabled={isSaving || steps.length === 0}>
+            Зберегти у флоу
+          </button>
         </div>
       </header>
-
-      {!flowId ? <p className="recorder-hint">Флоу не обрано — кроки не будуть збережені</p> : null}
 
       {steps.length === 0 ? (
         <p>Кроки з&apos;являться тут у міру дій у відкритому браузері</p>

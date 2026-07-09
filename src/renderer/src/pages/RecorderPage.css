@@ -117,11 +117,6 @@
   background-color: #b8452f;
 }
 
-.recorder-hint {
-  color: var(--ev-c-text-2);
-  font-size: 13px;
-}
-
 .batch-input-toggle {
   cursor: pointer;
   border: 1px solid var(--ev-c-gray-2);

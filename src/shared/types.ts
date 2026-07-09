@@ -74,6 +74,7 @@ export interface FieldMapping {
 }
 
 export interface BatchProgress {
+  flowId: string
   processed: number
   total: number
   succeeded: number
