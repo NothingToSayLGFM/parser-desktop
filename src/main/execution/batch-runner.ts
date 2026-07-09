@@ -1,5 +1,6 @@
 import { chromium } from 'playwright'
 import { executeSteps } from './execution-engine'
+import { isCaptchaPresent } from './captcha-detector'
 import { resolveChromiumExecutablePath } from '../playwright-executable-path'
 import { readColumnValues } from './xlsx-reader'
 import { resolveOutputPath } from './output-path'
@@ -7,19 +8,38 @@ import { writeRowsToXlsx } from './xlsx-writer'
 import { findFlowById } from '../db/flows-repository'
 import { createRun, finishRun } from '../db/run-history-repository'
 import { isFlowRunning, setFlowRunning } from '../state/running-flows'
+import { setCaptchaPending } from '../state/captcha-flows'
 import type { BatchProgress, BatchRunResult, FieldMapping, FlowStep } from '../../shared/types'
 
 const cancelRequestedFlowIds = new Set<string>()
+const captchaResumeResolvers = new Map<string, () => void>()
 
 export function requestBatchCancel(flowId: string): void {
   cancelRequestedFlowIds.add(flowId)
+  setCaptchaPending(flowId, false)
+  captchaResumeResolvers.get(flowId)?.()
+}
+
+export function resumeAfterCaptcha(flowId: string): void {
+  setCaptchaPending(flowId, false)
+  captchaResumeResolvers.get(flowId)?.()
+}
+
+function waitForCaptchaResume(flowId: string): Promise<void> {
+  return new Promise((resolve) => {
+    captchaResumeResolvers.set(flowId, () => {
+      captchaResumeResolvers.delete(flowId)
+      resolve()
+    })
+  })
 }
 
 export async function runBatch(
   flowId: string,
   inputFilePath: string,
   inputColumnHeader: string,
-  onProgress: (progress: BatchProgress) => void
+  onProgress: (progress: BatchProgress) => void,
+  onCaptcha: (flowId: string) => void
 ): Promise<BatchRunResult> {
   cancelRequestedFlowIds.delete(flowId)
 
@@ -49,7 +69,7 @@ export async function runBatch(
     const outputFilePath = resolveOutputPath(flow)
 
     const browser = await chromium.launch({
-      headless: true,
+      headless: false,
       executablePath: resolveChromiumExecutablePath()
     })
     const rows: Record<string, string>[] = []
@@ -60,7 +80,7 @@ export async function runBatch(
       const context = await browser.newContext()
       const page = await context.newPage()
 
-      for (let i = 0; i < values.length; i++) {
+      for (let i = 0; i < values.length;) {
         if (cancelRequestedFlowIds.has(flowId)) break
 
         try {
@@ -70,11 +90,21 @@ export async function runBatch(
           })
           rows.push(row)
           succeeded++
+          i++
         } catch {
+          if (await isCaptchaPresent(page)) {
+            setCaptchaPending(flowId, true)
+            onCaptcha(flowId)
+            await page.bringToFront()
+            await waitForCaptchaResume(flowId)
+            if (cancelRequestedFlowIds.has(flowId)) break
+            continue
+          }
           failed++
+          i++
         }
 
-        onProgress({ flowId, processed: i + 1, total: values.length, succeeded, failed })
+        onProgress({ flowId, processed: i, total: values.length, succeeded, failed })
       }
     } finally {
       await browser.close()
@@ -96,6 +126,7 @@ export async function runBatch(
     return { succeeded, failed, outputFilePath: writtenOutputFilePath }
   } finally {
     cancelRequestedFlowIds.delete(flowId)
+    setCaptchaPending(flowId, false)
     setFlowRunning(flowId, false)
   }
 }

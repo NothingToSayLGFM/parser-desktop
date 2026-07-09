@@ -1,10 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type {
+  BatchCaptchaEvent,
   BatchProgress,
   BatchRunResult,
   CreateFlowInput,
   Flow,
+  FlowCaptchaChange,
   FlowRunningChange,
   FlowRunResult,
   RecorderEvent,
@@ -28,6 +30,12 @@ const api = {
       const listener = (_event: unknown, change: FlowRunningChange): void => callback(change)
       ipcRenderer.on('flows:running-changed', listener)
       return () => ipcRenderer.removeListener('flows:running-changed', listener)
+    },
+    listCaptchaPending: (): Promise<string[]> => ipcRenderer.invoke('flows:list-captcha-pending'),
+    onCaptchaPendingChanged: (callback: (change: FlowCaptchaChange) => void): (() => void) => {
+      const listener = (_event: unknown, change: FlowCaptchaChange): void => callback(change)
+      ipcRenderer.on('flows:captcha-pending-changed', listener)
+      return () => ipcRenderer.removeListener('flows:captcha-pending-changed', listener)
     }
   },
   recorder: {
@@ -62,10 +70,18 @@ const api = {
     ): Promise<BatchRunResult> =>
       ipcRenderer.invoke('batch:run', flowId, inputFilePath, inputColumnHeader),
     cancel: (flowId: string): Promise<void> => ipcRenderer.invoke('batch:cancel', flowId),
+    resumeAfterCaptcha: (flowId: string): Promise<void> =>
+      ipcRenderer.invoke('batch:resume-after-captcha', flowId),
     onProgress: (callback: (progress: BatchProgress) => void): (() => void) => {
       const listener = (_event: unknown, progress: BatchProgress): void => callback(progress)
       ipcRenderer.on('batch:progress', listener)
       return () => ipcRenderer.removeListener('batch:progress', listener)
+    },
+    onCaptcha: (callback: (event: BatchCaptchaEvent) => void): (() => void) => {
+      const listener = (_event: unknown, captchaEvent: BatchCaptchaEvent): void =>
+        callback(captchaEvent)
+      ipcRenderer.on('batch:captcha', listener)
+      return () => ipcRenderer.removeListener('batch:captcha', listener)
     }
   }
 }

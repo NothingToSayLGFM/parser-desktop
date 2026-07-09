@@ -4,9 +4,10 @@ import './BatchPage.css'
 
 interface BatchPageProps {
   flowId: string
+  onToast?: (message: string) => void
 }
 
-export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element {
+export default function BatchPage({ flowId, onToast }: BatchPageProps): React.JSX.Element {
   const [flowName, setFlowName] = useState('')
   const [inputFilePath, setInputFilePath] = useState<string | null>(null)
   const [headers, setHeaders] = useState<string[]>([])
@@ -15,6 +16,7 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
   const [progress, setProgress] = useState<BatchProgress | null>(null)
   const [result, setResult] = useState<BatchRunResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [captchaDetected, setCaptchaDetected] = useState(false)
 
   useEffect(() => {
     window.api.flows.get(flowId).then((flow) => {
@@ -39,10 +41,20 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
     setIsRunning(true)
     setResult(null)
     setError(null)
+    setCaptchaDetected(false)
     setProgress({ flowId, processed: 0, total: 0, succeeded: 0, failed: 0 })
 
-    const unsubscribe = window.api.batch.onProgress((batchProgress) => {
-      if (batchProgress.flowId === flowId) setProgress(batchProgress)
+    const unsubscribeProgress = window.api.batch.onProgress((batchProgress) => {
+      if (batchProgress.flowId === flowId) {
+        setProgress(batchProgress)
+        setCaptchaDetected(false)
+      }
+    })
+    const unsubscribeCaptcha = window.api.batch.onCaptcha((captchaEvent) => {
+      if (captchaEvent.flowId === flowId) {
+        setCaptchaDetected(true)
+        onToast?.(`Флоу "${flowName}" — виявлено капчу, потрібне втручання`)
+      }
     })
     try {
       const runResult = await window.api.batch.run(flowId, inputFilePath, selectedColumn)
@@ -50,13 +62,20 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Невідома помилка')
     } finally {
-      unsubscribe()
+      unsubscribeProgress()
+      unsubscribeCaptcha()
       setIsRunning(false)
+      setCaptchaDetected(false)
     }
   }
 
   async function handleCancel(): Promise<void> {
     await window.api.batch.cancel(flowId)
+  }
+
+  async function handleResumeAfterCaptcha(): Promise<void> {
+    await window.api.batch.resumeAfterCaptcha(flowId)
+    setCaptchaDetected(false)
   }
 
   return (
@@ -99,6 +118,16 @@ export default function BatchPage({ flowId }: BatchPageProps): React.JSX.Element
           </button>
         )}
       </div>
+
+      {captchaDetected ? (
+        <div className="batch-captcha">
+          <p>
+            Виявлено капчу — розв&apos;яжіть її у вікні браузера, потім натисніть
+            &quot;Продовжити&quot;
+          </p>
+          <button onClick={handleResumeAfterCaptcha}>Продовжити</button>
+        </div>
+      ) : null}
 
       {error ? <p className="batch-error">Помилка: {error}</p> : null}
 

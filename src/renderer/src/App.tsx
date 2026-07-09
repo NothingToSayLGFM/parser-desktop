@@ -96,7 +96,7 @@ function App(): React.JSX.Element {
             display: view === 'batch' && selectedFlowId === flowId ? 'contents' : 'none'
           }}
         >
-          <BatchPage flowId={flowId} />
+          <BatchPage flowId={flowId} onToast={setToastMessage} />
         </div>
       ))}
       {toastMessage ? (

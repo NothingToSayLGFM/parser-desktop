@@ -101,6 +101,17 @@
   color: #d64545;
 }
 
+.batch-captcha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #d6a52f;
+  background-color: rgba(214, 165, 47, 0.12);
+  font-size: 13px;
+}
+
 .batch-result code {
   display: block;
   padding: 6px 10px;

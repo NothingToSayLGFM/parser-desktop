@@ -87,6 +87,15 @@ export interface BatchRunResult {
   outputFilePath: string | null
 }
 
+export interface BatchCaptchaEvent {
+  flowId: string
+}
+
+export interface FlowCaptchaChange {
+  flowId: string
+  isPending: boolean
+}
+
 export interface FlowRunningChange {
   flowId: string
   isRunning: boolean

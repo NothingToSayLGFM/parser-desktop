@@ -20,6 +20,7 @@ export default function FlowsDashboard({
   const [flows, setFlows] = useState<Flow[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [runningFlowIds, setRunningFlowIds] = useState<Set<string>>(new Set())
+  const [captchaPendingFlowIds, setCaptchaPendingFlowIds] = useState<Set<string>>(new Set())
 
   async function loadFlows(): Promise<void> {
     const result = await window.api.flows.list()
@@ -29,6 +30,7 @@ export default function FlowsDashboard({
   useEffect(() => {
     window.api.flows.list().then(setFlows)
     window.api.flows.listRunning().then((ids) => setRunningFlowIds(new Set(ids)))
+    window.api.flows.listCaptchaPending().then((ids) => setCaptchaPendingFlowIds(new Set(ids)))
   }, [])
 
   useEffect(() => {
@@ -36,6 +38,21 @@ export default function FlowsDashboard({
       setRunningFlowIds((previous) => {
         const next = new Set(previous)
         if (isRunning) {
+          next.add(flowId)
+        } else {
+          next.delete(flowId)
+        }
+        return next
+      })
+    })
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.api.flows.onCaptchaPendingChanged(({ flowId, isPending }) => {
+      setCaptchaPendingFlowIds((previous) => {
+        const next = new Set(previous)
+        if (isPending) {
           next.add(flowId)
         } else {
           next.delete(flowId)
@@ -129,6 +146,13 @@ export default function FlowsDashboard({
                   {flow.enabled ? 'увімкнено' : 'вимкнено'}
                 </button>
               </div>
+
+              {captchaPendingFlowIds.has(flow.id) ? (
+                <div className="flow-card-captcha">
+                  <span>Виявлено капчу — потрібне втручання</span>
+                  <button onClick={() => onOpenBatch(flow.id)}>Перейти до Пакетно</button>
+                </div>
+              ) : null}
 
               <div className="flow-card-schedule">
                 <span>Розклад:</span>

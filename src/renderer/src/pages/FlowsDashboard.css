@@ -82,6 +82,18 @@
   background-color: var(--color-background-mute);
 }
 
+.flow-card-captcha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d6a52f;
+  background-color: rgba(214, 165, 47, 0.12);
+  font-size: 13px;
+}
+
 .flow-card-schedule {
   display: flex;
   align-items: center;
