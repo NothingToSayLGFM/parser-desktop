@@ -1,4 +1,4 @@
-import { chromium, type Page } from 'playwright'
+import { chromium, type BrowserContext, type Page } from 'playwright'
 import type { Flow, FlowStep } from '../../shared/types'
 import { getFieldKey } from '../../shared/field-key'
 import { resolveChromiumExecutablePath } from '../playwright-executable-path'
@@ -17,53 +17,74 @@ function extractElementValue(element: Element): string {
 }
 
 export async function executeSteps(
-  page: Page,
+  context: BrowserContext,
+  initialPage: Page,
   steps: FlowStep[],
   timeoutMs: number,
   inputOverride?: StepInputOverride
 ): Promise<Record<string, string>> {
+  let page = initialPage
   page.setDefaultTimeout(timeoutMs)
-  const row: Record<string, string> = {}
 
-  for (const step of steps) {
-    const value = step.id === inputOverride?.stepId ? inputOverride.value : step.value
+  // A click on a `target="_blank"` link opens a brand new tab instead of
+  // navigating the current one — without this, every step after such a
+  // click would keep running against the now-stale original page.
+  const handleNewPage = (newPage: Page): void => {
+    page = newPage
+    page.setDefaultTimeout(timeoutMs)
+  }
+  context.on('page', handleNewPage)
 
-    switch (step.type) {
-      case 'goto':
-        if (value) {
-          await page.goto(value, { waitUntil: 'domcontentloaded' })
-        }
-        break
+  try {
+    const row: Record<string, string> = {}
 
-      case 'click':
-        if (step.selector) {
-          await page.click(step.selector)
-        }
-        break
+    for (const step of steps) {
+      const value = step.id === inputOverride?.stepId ? inputOverride.value : step.value
 
-      case 'fill':
-        if (step.selector && value !== undefined) {
-          await page.fill(step.selector, value)
-          if (step.isBatchInput) {
-            row[getFieldKey(step)] = value
+      switch (step.type) {
+        case 'goto':
+          if (value) {
+            await page.goto(value, { waitUntil: 'domcontentloaded' })
           }
-        }
-        break
+          break
 
-      case 'extract': {
-        if (!step.selector) break
-        const key = getFieldKey(step)
-        const extractedValue = await page
-          .locator(step.selector)
-          .first()
-          .evaluate(extractElementValue)
-        row[key] = extractedValue
-        break
+        case 'click':
+          if (step.selector) {
+            // Some sites render duplicate copies of the same widget for
+            // different breakpoints (mobile/desktop) and toggle visibility via
+            // CSS — a recorded selector can match several structurally
+            // identical elements where only one is actually on screen.
+            // `:visible` picks the one the user could actually have clicked.
+            await page.locator(`${step.selector}:visible`).first().click()
+          }
+          break
+
+        case 'fill':
+          if (step.selector && value !== undefined) {
+            await page.locator(`${step.selector}:visible`).first().fill(value)
+            if (step.isBatchInput) {
+              row[getFieldKey(step)] = value
+            }
+          }
+          break
+
+        case 'extract': {
+          if (!step.selector) break
+          const key = getFieldKey(step)
+          const extractedValue = await page
+            .locator(`${step.selector}:visible`)
+            .first()
+            .evaluate(extractElementValue)
+          row[key] = extractedValue
+          break
+        }
       }
     }
-  }
 
-  return row
+    return row
+  } finally {
+    context.off('page', handleNewPage)
+  }
 }
 
 export async function runFlow(flow: Flow): Promise<Record<string, string>> {
@@ -80,7 +101,7 @@ export async function runFlow(flow: Flow): Promise<Record<string, string>> {
   try {
     const context = await browser.newContext()
     const page = await context.newPage()
-    return await executeSteps(page, steps, flow.stepTimeoutMs)
+    return await executeSteps(context, page, steps, flow.stepTimeoutMs)
   } finally {
     await browser.close()
   }

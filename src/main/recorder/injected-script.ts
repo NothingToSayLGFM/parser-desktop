@@ -11,19 +11,34 @@ export function recorderInjectedScript(): void {
     return
   }
 
+  function isUniqueSelector(selector: string): boolean {
+    try {
+      return document.querySelectorAll(selector).length === 1
+    } catch {
+      return false
+    }
+  }
+
   function generateSelector(element: Element): string {
     const testId = element.getAttribute('data-testid')
     if (testId) {
-      return `[data-testid="${testId}"]`
+      const selector = `[data-testid="${testId}"]`
+      if (isUniqueSelector(selector)) return selector
     }
     if (element.id) {
-      return `#${element.id}`
+      const selector = `#${element.id}`
+      if (isUniqueSelector(selector)) return selector
     }
 
     const path: string[] = []
     let current: Element | null = element
 
-    while (current && current !== document.body && path.length < 5) {
+    // Climb until the accumulated path uniquely matches this element on the
+    // page — a fixed depth cap risks a path that still matches several
+    // similar blocks elsewhere in the DOM (e.g. repeated table rows), which
+    // on replay silently clicks whichever match comes first, possibly a
+    // hidden one.
+    while (current && current !== document.body) {
       if (current.id) {
         path.unshift(`#${current.id}`)
         break
@@ -41,6 +56,7 @@ export function recorderInjectedScript(): void {
       }
 
       path.unshift(segment)
+      if (isUniqueSelector(path.join(' > '))) break
       current = parent
     }
 
@@ -97,17 +113,39 @@ export function recorderInjectedScript(): void {
   )
 
   document.addEventListener('DOMContentLoaded', () => {
+    const url = window.location.href
+
+    // Chromium dispatches DOMContentLoaded twice per navigation: once for a
+    // transient placeholder document created before the real response
+    // arrives (`readyState` still "loading" then), and once for the actual
+    // document — addInitScript reruns this whole function on each, so both
+    // fire for the exact same URL. Skip the second one; this must run
+    // before the click-suppression check below, since otherwise the
+    // placeholder document's firing would already consume/clear
+    // `__recorderLastClickAt` before the real document gets a chance to
+    // see it.
+    const lastGotoUrl = sessionStorage.getItem('__recorderLastGotoUrl')
+    const lastGotoAt = Number(sessionStorage.getItem('__recorderLastGotoAt') ?? 0)
+    if (lastGotoUrl === url && Date.now() - lastGotoAt < 2000) {
+      return
+    }
+    sessionStorage.setItem('__recorderLastGotoUrl', url)
+    sessionStorage.setItem('__recorderLastGotoAt', String(Date.now()))
+
     // A navigation that fires right after a recorded click is almost always
     // that click's own side effect (form submit, link, SPA route change).
     // Recording it as a separate `goto` would bake in a literal URL that
     // overrides whatever the click produces on replay (e.g. with a different
-    // batch input value), so such navigations are skipped here.
+    // batch input value), so such navigations are skipped here. The window
+    // is generous (not ~1-2s) because a click-triggered navigation to a
+    // slow-loading page can easily take several seconds to reach
+    // DOMContentLoaded on the destination page.
     const lastClickAt = Number(sessionStorage.getItem('__recorderLastClickAt') ?? 0)
     sessionStorage.removeItem('__recorderLastClickAt')
-    if (lastClickAt && Date.now() - lastClickAt < 4000) {
+    if (lastClickAt && Date.now() - lastClickAt < 10000) {
       return
     }
 
-    emit({ type: 'goto', value: window.location.href })
+    emit({ type: 'goto', value: url })
   })
 }

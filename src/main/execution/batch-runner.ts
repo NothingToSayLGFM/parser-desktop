@@ -78,13 +78,20 @@ export async function runBatch(
 
     try {
       const context = await browser.newContext()
-      const page = await context.newPage()
+      let page = await context.newPage()
+      // A click that opens a new tab (target="_blank") leaves this
+      // reference stale for the captcha check/bringToFront below —
+      // executeSteps follows new tabs internally for its own steps, but
+      // this keeps batch-runner's own reference in sync too.
+      context.on('page', (newPage) => {
+        page = newPage
+      })
 
       for (let i = 0; i < values.length;) {
         if (cancelRequestedFlowIds.has(flowId)) break
 
         try {
-          const row = await executeSteps(page, steps, flow.stepTimeoutMs, {
+          const row = await executeSteps(context, page, steps, flow.stepTimeoutMs, {
             stepId: inputStep.id,
             value: values[i]
           })

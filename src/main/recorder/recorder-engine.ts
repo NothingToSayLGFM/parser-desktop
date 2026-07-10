@@ -8,6 +8,7 @@ type RecorderEventListener = (event: RecorderEvent) => void
 let browser: Browser | null = null
 let context: BrowserContext | null = null
 let page: Page | null = null
+let currentMode: RecorderMode = 'navigate'
 
 export function isRecording(): boolean {
   return context !== null
@@ -35,11 +36,27 @@ export async function startRecording(url: string, onEvent: RecorderEventListener
     page = null
   })
 
+  // Links opening in a new tab (target="_blank") create a brand new Page
+  // that our previously-tracked `page` knows nothing about. `sessionStorage`
+  // does not reliably carry the recorder mode into it (different origin
+  // than about:blank, and a fresh top-level browsing context in some
+  // cases), so re-apply the current mode explicitly once the new tab has
+  // navigated, and start tracking it as the active page.
+  context.on('page', (newPage) => {
+    page = newPage
+    newPage.once('domcontentloaded', () => {
+      void newPage.evaluate((recorderMode) => {
+        sessionStorage.setItem('__recorderMode', recorderMode)
+      }, currentMode)
+    })
+  })
+
   page = await context.newPage()
   await page.goto(url, { waitUntil: 'domcontentloaded' })
 }
 
 export async function setMode(mode: RecorderMode): Promise<void> {
+  currentMode = mode
   await page?.evaluate((recorderMode) => {
     sessionStorage.setItem('__recorderMode', recorderMode)
   }, mode)
