@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { chromium } from 'patchright'
 
 // In a packaged Electron app, Playwright resolves its own package directory
 // to a path inside `app.asar`. Reading that path works fine (Electron's `fs`

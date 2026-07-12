@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { chromium } from 'patchright'
 import { executeSteps } from './execution-engine'
 import { isCaptchaPresent } from './captcha-detector'
 import { resolveChromiumExecutablePath } from '../playwright-executable-path'

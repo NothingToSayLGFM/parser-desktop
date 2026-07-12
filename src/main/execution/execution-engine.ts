@@ -1,4 +1,4 @@
-import { chromium, type BrowserContext, type Page } from 'playwright'
+import { chromium, type BrowserContext, type Page } from 'patchright'
 import type { Flow, FlowStep } from '../../shared/types'
 import { getFieldKey } from '../../shared/field-key'
 import { resolveChromiumExecutablePath } from '../playwright-executable-path'

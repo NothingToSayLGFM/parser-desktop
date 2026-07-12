@@ -1,4 +1,4 @@
-import type { Page } from 'playwright'
+import type { Page } from 'patchright'
 
 const CAPTCHA_SELECTORS = [
   'iframe[src*="challenges.cloudflare.com"]',

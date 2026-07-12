@@ -1,4 +1,4 @@
-import { chromium, type Browser, type BrowserContext, type Page } from 'playwright'
+import { chromium, type Browser, type BrowserContext, type Page } from 'patchright'
 import { recorderInjectedScript } from './injected-script'
 import { resolveChromiumExecutablePath } from '../playwright-executable-path'
 import type { RecorderEvent, RecorderMode } from '../../shared/types'
