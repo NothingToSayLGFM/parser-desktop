@@ -9,9 +9,27 @@ let browser: Browser | null = null
 let context: BrowserContext | null = null
 let page: Page | null = null
 let currentMode: RecorderMode = 'navigate'
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
 export function isRecording(): boolean {
   return context !== null
+}
+
+async function pollQueuedEvents(onEvent: RecorderEventListener): Promise<void> {
+  if (!page) return
+  try {
+    const events = await page.evaluate(() => {
+      const raw = sessionStorage.getItem('__recorderQueue')
+      sessionStorage.removeItem('__recorderQueue')
+      return raw ? (JSON.parse(raw) as unknown[]) : []
+    })
+    for (const event of events) {
+      onEvent(event as RecorderEvent)
+    }
+  } catch {
+    // Page is mid-navigation or was just closed — the next tick picks up
+    // whatever gets queued once it settles.
+  }
 }
 
 export async function startRecording(url: string, onEvent: RecorderEventListener): Promise<void> {
@@ -25,16 +43,26 @@ export async function startRecording(url: string, onEvent: RecorderEventListener
   })
   context = await browser.newContext()
 
-  await context.exposeFunction('__recorderEmit', (event: RecorderEvent) => {
-    onEvent(event)
-  })
   await context.addInitScript(recorderInjectedScript)
 
   context.on('close', () => {
     context = null
     browser = null
     page = null
+    if (pollTimer) {
+      clearInterval(pollTimer)
+      pollTimer = null
+    }
   })
+
+  // Patchright makes `exposeFunction` callbacks unreachable from the
+  // isolated context addInitScript code runs in (see injected-script.ts),
+  // so recorded events are queued in `sessionStorage` there instead and
+  // drained here by polling — a normal Node-initiated `page.evaluate()`
+  // call, which is unaffected by that isolation.
+  pollTimer = setInterval(() => {
+    void pollQueuedEvents(onEvent)
+  }, 200)
 
   // Links opening in a new tab (target="_blank") create a brand new Page
   // that our previously-tracked `page` knows nothing about. `sessionStorage`

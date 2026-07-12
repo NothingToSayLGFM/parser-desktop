@@ -63,11 +63,34 @@ export function recorderInjectedScript(): void {
     return path.join(' > ')
   }
 
+  // Patchright routes addInitScript code through an isolated execution
+  // context to avoid the CDP fingerprints of `Runtime.enable`. `exposeFunction`
+  // bindings end up invisible from inside that context — calling
+  // `window.__recorderEmit(...)` here silently no-ops even though the
+  // binding is visible via a Node-initiated `page.evaluate()`. Queue events
+  // in `sessionStorage` instead and have the Node side poll for them —
+  // sessionStorage is plain page state, unaffected by the isolation.
+  //
+  // Patchright also appears to run this whole addInitScript function twice
+  // per document (once per execution context it maintains), which silently
+  // double-registers every `document.addEventListener` call below — a
+  // single real click/change fires both copies, queuing every event twice.
+  // Collapse near-simultaneous identical events (content-based, short
+  // window) regardless of cause.
   function emit(event: { type: string; selector?: string; value?: string }): void {
-    const globalWithEmitter = window as unknown as {
-      __recorderEmit?: (event: unknown) => void
+    const key = JSON.stringify(event)
+    const lastKey = sessionStorage.getItem('__recorderLastEmitKey')
+    const lastAt = Number(sessionStorage.getItem('__recorderLastEmitAt') ?? 0)
+    if (lastKey === key && Date.now() - lastAt < 500) {
+      return
     }
-    globalWithEmitter.__recorderEmit?.(event)
+    sessionStorage.setItem('__recorderLastEmitKey', key)
+    sessionStorage.setItem('__recorderLastEmitAt', String(Date.now()))
+
+    const raw = sessionStorage.getItem('__recorderQueue')
+    const queue: unknown[] = raw ? JSON.parse(raw) : []
+    queue.push(event)
+    sessionStorage.setItem('__recorderQueue', JSON.stringify(queue))
   }
 
   function extractValue(element: Element): string {
